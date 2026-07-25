@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DTF·LAB — Filmden Kumaşa Canlı Baskı</title>
+  <meta name="description" content="Direct-to-Film transfer baskı. Tasarımını yükle, gang sheet'e diz, metretül başına öde — ertesi gün kargoda. Her kumaşa canlı, 60+ yıkama dayanıklı baskı.">
+  <meta name="theme-color" content="#E5006D">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="DTF·LAB — Filmden Kumaşa Canlı Baskı">
+  <meta property="og:description" content="Anında fiyat, otomatik gang sheet dizgi, 24 saat üretim.">
+  <meta property="og:type" content="website">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34'><rect x='1.5' y='1.5' width='31' height='31' rx='8' fill='%23E5006D'/><path d='M9 24V10h9M9 17h7' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' fill='none'/><circle cx='24' cy='22' r='3.4' fill='%23FFC400'/></svg>">
+</head>
+<body>
+
+<!-- ===================== NAV ===================== -->
+<header class="nav">
+  <div class="wrap nav-in">
+    <a href="#top" class="brand" aria-label="DTF LAB ana sayfa">
+      <svg class="logo" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="31" height="31" rx="8" fill="var(--ink)"/>
+        <path d="M9 24V10h9M9 17h7" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+        <circle cx="24" cy="22" r="3.4" fill="var(--yellow)"/>
+      </svg>
+      DTF<b>·</b>LAB
+    </a>
+    <nav class="nav-links" aria-label="Ana menü">
+      <a href="#surec">Nasıl Çalışır</a>
+      <a href="#hesapla">Fiyat Hesapla</a>
+      <a href="#avantaj">Neden DTF</a>
+      <a href="#galeri">Örnekler</a>
+      <a href="#sss">SSS</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="icon-btn" id="themeBtn" aria-label="Tema değiştir" title="Aydınlık / Karanlık">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <a href="#hesapla" class="btn btn-primary btn-sm">Sipariş Ver</a>
+      <button class="icon-btn hamburger" id="menuBtn" aria-label="Menü">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="badge-row">
+        <span class="chip">⚡ <b>24 saatte</b> üretim</span>
+        <span class="chip">🎨 Beyaz mürekkep · <b>her kumaş</b></span>
+        <span class="chip">♻️ <b>60+</b> yıkama garanti</span>
+      </div>
+      <h1>Tasarımını yükle,<br>biz <span class="hl">filme</span> basalım.</h1>
+      <p class="lead">Direct-to-Film transfer baskı. Tek tasarım ya da yüzlerce logoyu tek gang sheet'te topla — metretül başına öde, ertesi gün kargoda.</p>
+      <div class="hero-cta">
+        <a href="#hesapla" class="btn btn-primary">Anında Fiyat Al →</a>
+        <a href="#surec" class="btn btn-ghost">Nasıl çalışır?</a>
+      </div>
+      <div class="hero-stats">
+        <div class="st"><b>0,30–0,60m</b><span>ROLL GENİŞLİĞİ</span></div>
+        <div class="st"><b>1200 DPI</b><span>BASKI ÇÖZÜNÜRLÜĞÜ</span></div>
+        <div class="st"><b>+18K</b><span>TAMAMLANAN SİPARİŞ</span></div>
+      </div>
+    </div>
+
+    <!-- Hero film / gang sheet visual -->
+    <div class="film-card reveal">
+      <div class="film-top">
+        <div class="dots"><i style="background:var(--ink)"></i><i style="background:var(--cyan)"></i><i style="background:var(--yellow)"></i></div>
+        <span class="t">gang-sheet · onizleme.pdf</span>
+      </div>
+      <div class="film-stage">
+        <div class="sheet" id="heroSheet">
+          <span class="ruler">60 × 100 cm</span>
+          <!-- tiles injected by JS -->
+        </div>
+      </div>
+      <div class="film-foot">
+        <div class="price-live">
+          <small>Tahmini tutar</small>
+          <b id="heroPrice">₺390</b>
+        </div>
+        <a href="#hesapla" class="btn btn-primary btn-sm">Bu sayfayı sipariş et</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MARQUEE ===================== -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>TİŞÖRT <b>·</b> SWEATSHIRT <b>·</b> TOTE ÇANTA <b>·</b> ŞAPKA <b>·</b> İŞ KIYAFETİ <b>·</b> HODİ <b>·</b> POLAR <b>·</b> SPOR FORMA <b>·</b> BEBEK BODY <b>·</b> ÖNLÜK <b>·</b></span>
+    <span>TİŞÖRT <b>·</b> SWEATSHIRT <b>·</b> TOTE ÇANTA <b>·</b> ŞAPKA <b>·</b> İŞ KIYAFETİ <b>·</b> HODİ <b>·</b> POLAR <b>·</b> SPOR FORMA <b>·</b> BEBEK BODY <b>·</b> ÖNLÜK <b>·</b></span>
+  </div>
+</div>
+
+<!-- ===================== SÜREÇ ===================== -->
+<section id="surec">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Süreç</span>
+      <h2>Dosyadan kumaşa dört adım</h2>
+      <p>Tasarımını yüklemekten kapına gelene kadar tüm süreç şeffaf ve takip edilebilir.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <span class="num">01 — YÜKLE</span>
+        <h3>Tasarımını yükle</h3>
+        <p>PNG, PDF veya SVG. Şeffaf zeminli 300 DPI dosyanı sürükle bırak — otomatik ön kontrol yapılır.</p>
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4m0 0 4 4m-4-4L8 8M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      </div>
+      <div class="step reveal">
+        <span class="num">02 — DİZ</span>
+        <h3>Gang sheet'e diz</h3>
+        <p>Birden çok tasarımı otomatik dizgiyle tek film sayfasında topla, boşluğu sıfıra indir.</p>
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" stroke-linejoin="round"/></svg></div>
+      </div>
+      <div class="step reveal">
+        <span class="num">03 — BAS</span>
+        <h3>Filme baskı + toz</h3>
+        <p>CMYK + beyaz mürekkep PET filme basılır, hot-melt toz uygulanıp kürlenir. Metretül başına fiyat.</p>
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" stroke-linejoin="round"/></svg></div>
+      </div>
+      <div class="step reveal">
+        <span class="num">04 — KARGO</span>
+        <h3>Ertesi gün kapında</h3>
+        <p>Transferlerin rulo halinde paketlenir, kargoya verilir. İstersen ısı presiyle uygulama rehberi ekleriz.</p>
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7M6.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM17.5 19a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" stroke-linejoin="round"/></svg></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== HESAPLAYICI ===================== -->
+<section id="hesapla">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Anında Fiyatlandırma</span>
+      <h2>Gang sheet fiyatını saniyede gör</h2>
+      <p>Rulo genişliğini ve uzunluğunu seç, adedi belirle. Fiyat KDV dahil, canlı olarak hesaplanır.</p>
+    </div>
+
+    <div class="calc reveal">
+      <!-- controls -->
+      <div>
+        <div class="field">
+          <label>Rulo genişliği <span class="val" id="wVal">60 cm</span></label>
+          <div class="opts" id="widthOpts">
+            <div class="opt" data-w="30">30 cm<small>dar rulo</small></div>
+            <div class="opt active" data-w="60">60 cm<small>standart</small></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Uzunluk <span class="val" id="lVal">100 cm</span></label>
+          <input type="range" id="lenRange" min="20" max="500" step="5" value="100" aria-label="Uzunluk (cm)">
+          <div class="opts" style="margin-top:12px" id="lenPresets">
+            <div class="opt" data-l="50">50<small>cm</small></div>
+            <div class="opt active" data-l="100">100<small>cm</small></div>
+            <div class="opt" data-l="200">200<small>cm</small></div>
+            <div class="opt" data-l="500">5 m<small>toplu</small></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Adet <span class="val" id="qVal">1 sayfa</span></label>
+          <div class="stepper">
+            <button type="button" id="qMinus" aria-label="Azalt">−</button>
+            <input type="text" id="qInput" value="1" inputmode="numeric" aria-label="Adet">
+            <button type="button" id="qPlus" aria-label="Artır">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- summary -->
+      <div class="summary">
+        <h3>Sipariş özeti</h3>
+        <div class="sum-row"><span>Ebat</span><span class="mono" id="sDim">60 × 100 cm</span></div>
+        <div class="sum-row"><span>Alan</span><span class="mono" id="sArea">0,60 m²</span></div>
+        <div class="sum-row"><span>Birim fiyat</span><span class="mono" id="sUnit">₺390</span></div>
+        <div class="sum-row"><span>Adet</span><span class="mono" id="sQty">1</span></div>
+        <div class="sum-total">
+          <div>
+            <div class="lbl">Toplam (KDV dahil)</div>
+            <div class="disc" id="sDisc" style="display:none">🎉 <span id="sDiscTxt">%10 toplu indirim</span></div>
+          </div>
+          <div class="big mono" id="sTotal">₺390</div>
+        </div>
+        <a href="#teklif" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:18px;">Siparişe geç →</a>
+        <p class="note">* Örnek fiyatlandırmadır. 2 m² üzeri %10, 5 m² üzeri %15 indirim. Min. sipariş 0,3 m². Dosya ön kontrolü ücretsizdir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== AVANTAJLAR ===================== -->
+<section id="avantaj">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Neden DTF</span>
+      <h2>Serigrafinin kalıbı yok, dijitalin sınırı yok</h2>
+      <p>Adet ne olursa olsun aynı kalite. Tek baskıda milyon renk, her kumaşta canlı sonuç.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat reveal">
+        <div class="ic" style="background:var(--ink-soft); color:var(--ink)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.5 7.1 18.2 8 12.7 4 8.8 9.5 8 12 3Z" stroke-linejoin="round"/></svg></div>
+        <h3>Sınırsız renk</h3>
+        <p>Fotoğraf, degrade, ince detay — kalıp derdi yok. CMYK + beyaz mürekkeple tam renk baskı.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ic" style="background:color-mix(in srgb,var(--cyan) 16%, transparent); color:var(--cyan)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Her kumaşa yapışır</h3>
+        <p>Pamuk, polyester, karışım, koyu-açık fark etmez. Beyaz mürekkep alt zemini sayesinde siyah kumaşta bile canlı.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ic" style="background:color-mix(in srgb,var(--yellow) 22%, transparent); color:#a67c00"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0Zm9-5v5l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>60+ yıkama dayanım</h3>
+        <p>Esnek ve çatlamaz baskı. Doğru presleme ile 60'tan fazla yıkamada renk ve doku korunur.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ic" style="background:var(--ink-soft); color:var(--ink)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20" stroke-linecap="round"/></svg></div>
+        <h3>Tek adet de olur</h3>
+        <p>Minimum sipariş baskısı yok. 1 tişört de 1000 tişört de aynı gün üretilir.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ic" style="background:color-mix(in srgb,var(--cyan) 16%, transparent); color:var(--cyan)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H4zM2 20h20M9 8l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>Gang sheet ekonomisi</h3>
+        <p>Boş film alanı = para kaybı. Otomatik dizgi ile metretülünü tamamen doldur, maliyeti düşür.</p>
+      </div>
+      <div class="feat reveal">
+        <div class="ic" style="background:color-mix(in srgb,var(--yellow) 22%, transparent); color:#a67c00"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z" stroke-linejoin="round"/></svg></div>
+        <h3>24 saat üretim</h3>
+        <p>Öğlene kadar onaylanan siparişler ertesi gün kargoda. Acil işler için hızlı üretim seçeneği.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== GALERİ ===================== -->
+<section id="galeri">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">Kullanım Alanları</span>
+      <h2>Neye baskı yaparsan yap, aynı canlılık</h2>
+    </div>
+    <div class="gallery">
+      <div class="g-item g1 reveal"><span class="emo">👕</span><span class="lab">Tişört &amp; sweat</span></div>
+      <div class="g-item g2 reveal"><span class="emo">🧢</span><span class="lab">Şapka &amp; aksesuar</span></div>
+      <div class="g-item g3 reveal"><span class="emo">🛍️</span><span class="lab">Bez çanta</span></div>
+      <div class="g-item g4 reveal"><span class="emo">🏢</span><span class="lab">Kurumsal &amp; promosyon</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SSS ===================== -->
+<section id="sss">
+  <div class="wrap">
+    <div class="section-head reveal" style="text-align:center; margin:0 auto 46px;">
+      <span class="eyebrow" style="justify-content:center">Sık Sorulanlar</span>
+      <h2>Merak edilenler</h2>
+    </div>
+    <div class="faq">
+      <div class="qa">
+        <button>Gang sheet nedir, neden avantajlı? <span class="plus">+</span></button>
+        <div class="ans"><p>Gang sheet, birden fazla tasarımın tek bir film rulosu üzerinde toplandığı sayfadır. Filmin boş kalan alanı için de para ödediğinizden, tasarımları sıkıştırarak metretül maliyetini ciddi oranda düşürürsünüz. Farklı boyut ve adetteki logoları tek siparişte birleştirebilirsiniz.</p></div>
+      </div>
+      <div class="qa">
+        <button>Dosyamı hangi formatta yüklemeliyim? <span class="plus">+</span></button>
+        <div class="ans"><p>Şeffaf arka planlı, 300 DPI ve gerçek boyutunda PNG öneririz. Vektörel işler için PDF veya SVG de kabul edilir. Yükleme sonrası otomatik ön kontrol; düşük çözünürlük, kesim payı ve renk profili konusunda uyarır.</p></div>
+      </div>
+      <div class="qa">
+        <button>Koyu renk kumaşa baskı olur mu? <span class="plus">+</span></button>
+        <div class="ans"><p>Evet. DTF baskıda beyaz mürekkep alt zemin olarak basıldığı için siyah dahil tüm koyu kumaşlarda renkler canlı çıkar. Serigrafiden farkı, ekstra kalıp veya maliyet gerektirmemesidir.</p></div>
+      </div>
+      <div class="qa">
+        <button>Transferi nasıl uygularım? <span class="plus">+</span></button>
+        <div class="ans"><p>Isı presi veya ütü ile: ~150–160°C sıcaklıkta 15 saniye baskı, soğuyunca filmi soyma (cold peel). Her siparişe kumaş tipine göre önerilen sıcaklık/süre kılavuzu ekliyoruz.</p></div>
+      </div>
+      <div class="qa">
+        <button>Teslimat ne kadar sürer? <span class="plus">+</span></button>
+        <div class="ans"><p>Dosya onayından sonra standart üretim 24 saattir; kargo süresi bölgeye göre 1–3 iş günüdür. Acil siparişlerde aynı gün üretim seçeneği sunulur.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TEKLİF / CTA ===================== -->
+<section id="teklif">
+  <div class="wrap">
+    <div class="cta reveal">
+      <div class="cta-grid">
+        <div>
+          <h2>Hazır mısın? Dosyanı yükle, teklifini al.</h2>
+          <p>Tasarımını gönder; ekibimiz dizgi ve fiyat onayıyla 30 dakika içinde döner. Kurumsal ve bayi fiyatları için de bu formu kullanabilirsin.</p>
+        </div>
+        <form class="form" id="quoteForm" novalidate>
+          <div class="form-row">
+            <div><label for="fname">Ad Soyad / Firma</label><input id="fname" name="name" placeholder="Örn. Atölye 34" required></div>
+            <div><label for="fphone">Telefon</label><input id="fphone" name="phone" placeholder="05__ ___ __ __" required></div>
+          </div>
+          <label for="ftype">İş türü</label>
+          <select id="ftype" name="type">
+            <option>Tekil transfer baskı</option>
+            <option selected>Gang sheet (toplu)</option>
+            <option>Kurumsal / bayi</option>
+            <option>Numune talebi</option>
+          </select>
+          <label>Tasarım dosyası</label>
+          <label class="uploader" for="ffile" id="uploadLabel">⬆ Dosyanı buraya sürükle ya da seç (PNG / PDF / SVG)</label>
+          <input id="ffile" name="file" type="file" accept=".png,.pdf,.svg" style="display:none">
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:16px;">Teklif iste →</button>
+          <div class="form-msg" id="formMsg"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a href="#top" class="brand" style="margin-bottom:14px">
+          <svg class="logo" viewBox="0 0 34 34" fill="none" aria-hidden="true"><rect x="1.5" y="1.5" width="31" height="31" rx="8" fill="var(--ink)"/><path d="M9 24V10h9M9 17h7" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/><circle cx="24" cy="22" r="3.4" fill="var(--yellow)"/></svg>
+          DTF<b>·</b>LAB
+        </a>
+        <p style="color:var(--text-2); font-size:15px; max-width:34ch;">Filmden kumaşa canlı, dayanıklı DTF transfer baskı. İstanbul merkezli, Türkiye geneli kargo.</p>
+      </div>
+      <div><h4>Ürünler</h4><a href="#hesapla">Gang Sheet</a><a href="#hesapla">Tekil Transfer</a><a href="#teklif">Kurumsal</a><a href="#teklif">Numune</a></div>
+      <div><h4>Kurumsal</h4><a href="#surec">Nasıl Çalışır</a><a href="#avantaj">Neden DTF</a><a href="#sss">SSS</a><a href="#teklif">İletişim</a></div>
+      <div><h4>İletişim</h4><a href="tel:+902120000000">0212 000 00 00</a><a href="mailto:merhaba@dtflab.com">merhaba@dtflab.com</a><a href="#">@dtflab</a></div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 DTF·LAB — Taslak tasarım</span>
+      <span>KVKK · Mesafeli Satış · Teslimat &amp; İade</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>
