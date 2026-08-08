@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#0b0f14">
+<meta name="description" content="Telefonu gezdirerek en iyi hücresel internet hızına sahip noktayı bulmanı sağlayan basit ölçüm uygulaması.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Sinyal Haritası — En iyi hız noktasını bul</title>
+<style>
+/* ---------------------------------------------------------------- tokens */
+:root{
+  --bg:#0b0f14; --surface:#131a23; --surface-2:#1b2531; --border:#26313f;
+  --text:#e8eef6; --muted:#93a2b5; --faint:#5f7188;
+  --accent:#2dd4a7; --accent-ink:#04201a;
+  --warn:#f6c453; --danger:#ff6b6b; --info:#5eb0ff;
+  --r:14px; --pad:16px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f3f6fa; --surface:#ffffff; --surface-2:#eef2f7; --border:#d9e1ec;
+    --text:#101720; --muted:#5a6a7d; --faint:#8496aa;
+    --accent:#0d9c7a; --accent-ink:#ffffff;
+    --warn:#a5730a; --danger:#c33; --info:#1668c7;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-text-size-adjust:100%;
+  padding:0 12px calc(104px + var(--safe-b));
+  max-width:640px; margin:0 auto;
+  overscroll-behavior-y:contain;
+}
+h1,h2{margin:0;line-height:1.25}
+h1{font-size:1.15rem;letter-spacing:-.01em}
+h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+p{margin:.5em 0}
+button,input,select{font:inherit;color:inherit}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+/* ---------------------------------------------------------------- layout */
+header{display:flex;align-items:center;gap:10px;padding:14px 4px 10px}
+.logo{width:30px;height:30px;flex:none}
+.sub{font-size:.78rem;color:var(--muted)}
+section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:var(--pad);margin:12px 0}
+.row{display:flex;gap:10px;align-items:center}
+.row.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+
+/* ---------------------------------------------------------------- status */
+.status{display:flex;gap:8px;flex-wrap:wrap;font-size:.76rem;padding:0 4px;margin-bottom:2px}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  background:var(--surface-2);border:1px solid var(--border);
+  border-radius:999px;padding:4px 10px;color:var(--muted);white-space:nowrap;
+}
+.chip b{color:var(--text);font-weight:600}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex:none}
+.dot.ok{background:var(--accent)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--danger)}
+
+/* ---------------------------------------------------------------- gauge */
+.gauge{text-align:center;padding:4px 0 2px}
+.big{font-size:3.4rem;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-size:1rem;font-weight:600;color:var(--muted);margin-left:6px;letter-spacing:0}
+.bar{height:10px;border-radius:6px;background:var(--surface-2);overflow:hidden;margin:14px 0 6px;border:1px solid var(--border)}
+.bar>i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s ease,background .25s ease}
+.scale{position:relative;height:1em;font-size:.66rem;color:var(--faint)}
+.scale span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.scale span:first-child{transform:none}
+.scale span:last-child{transform:translateX(-100%)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.stat{background:var(--surface-2);border-radius:10px;padding:8px 6px;text-align:center}
+.stat .k{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.stat .v{font-size:1.05rem;font-weight:650;font-variant-numeric:tabular-nums}
+.phase{min-height:1.3em;font-size:.8rem;color:var(--muted);margin-top:10px}
+
+/* ---------------------------------------------------------------- controls */
+input[type=text],select{
+  background:var(--surface-2);border:1px solid var(--border);border-radius:10px;
+  padding:11px 12px;width:100%;
+}
+input[type=text]:focus,select:focus{outline:2px solid var(--accent);outline-offset:1px}
+.btn{
+  border:1px solid var(--border);background:var(--surface-2);border-radius:12px;
+  padding:12px 14px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent;font-size:1.05rem;padding:16px;flex:1}
+.btn.stop{background:var(--danger);color:#fff;border-color:transparent}
+.btn.sm{padding:8px 11px;font-size:.8rem;font-weight:500}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chips .btn.sm{border-radius:999px}
+
+/* ---------------------------------------------------------------- guide */
+.guide{display:flex;gap:14px;align-items:center}
+.arrow{
+  width:64px;height:64px;flex:none;border-radius:50%;
+  background:var(--surface-2);border:1px solid var(--border);
+  display:grid;place-items:center;
+}
+.arrow svg{width:34px;height:34px;transition:transform .3s ease}
+.guide .name{font-weight:700;font-size:1.05rem}
+.guide .det{font-size:.85rem;color:var(--muted)}
+
+/* ---------------------------------------------------------------- map */
+#map{width:100%;height:240px;display:block;border-radius:10px;background:var(--surface-2);touch-action:none}
+
+/* ---------------------------------------------------------------- list */
+.spot{border-top:1px solid var(--border);padding:11px 0;display:flex;gap:10px;align-items:center}
+.spot:first-of-type{border-top:0}
+.rank{width:26px;height:26px;flex:none;border-radius:8px;background:var(--surface-2);display:grid;place-items:center;font-size:.78rem;font-weight:700;color:var(--muted)}
+.spot.best .rank{background:var(--accent);color:var(--accent-ink)}
+.spot .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spot .mt{font-size:.74rem;color:var(--muted)}
+.spot .sp{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.spot .sp em{display:block;font-style:normal;font-size:.7rem;color:var(--muted);font-weight:500}
+.minibar{height:4px;border-radius:3px;background:var(--surface-2);margin-top:5px;overflow:hidden}
+.minibar>i{display:block;height:100%;background:var(--accent)}
+.empty{color:var(--muted);font-size:.88rem;text-align:center;padding:18px 0}
+
+/* ---------------------------------------------------------------- misc */
+details{border-top:1px solid var(--border);padding-top:10px;margin-top:4px}
+details summary{cursor:pointer;font-size:.85rem;color:var(--muted);font-weight:600}
+details[open] summary{margin-bottom:10px}
+.field{margin:10px 0}
+.field label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:5px}
+.hint{font-size:.76rem;color:var(--faint);margin-top:4px}
+.note{font-size:.8rem;color:var(--muted)}
+.note b{color:var(--text)}
+.warnbox{background:color-mix(in srgb,var(--warn) 14%,transparent);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);border-radius:10px;padding:10px 12px;font-size:.82rem}
+footer{text-align:center;font-size:.72rem;color:var(--faint);padding:18px 8px}
+.dock{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  display:flex;gap:10px;max-width:640px;margin:0 auto;
+  padding:10px 12px calc(10px + var(--safe-b));
+  background:color-mix(in srgb,var(--bg) 86%,transparent);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-top:1px solid var(--border);
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+    <path d="M12 20v-6" stroke="var(--accent)"/><circle cx="12" cy="11" r="2.2" fill="var(--accent)" stroke="none"/>
+    <path d="M8.2 14.8a5.4 5.4 0 0 1 0-7.6M15.8 7.2a5.4 5.4 0 0 1 0 7.6" opacity=".75"/>
+    <path d="M5.4 17.6a9.4 9.4 0 0 1 0-13.2M18.6 4.4a9.4 9.4 0 0 1 0 13.2" opacity=".4"/>
+  </svg>
+  <div class="grow">
+    <h1>Sinyal Haritası</h1>
+    <div class="sub">Gez, ölç, en hızlı noktayı bul</div>
+  </div>
+</header>
+
+<div class="status" id="status"></div>
+
+<!-- ============================================================ ÖLÇÜM -->
+<section>
+  <div class="gauge">
+    <div class="big mono"><span id="liveSpeed">—</span><small>Mbit/s</small></div>
+    <div class="bar"><i id="liveBar"></i></div>
+    <div class="scale" aria-hidden="true">
+      <span style="left:0">0,1</span><span style="left:28.8%">1</span><span style="left:57.5%">10</span><span style="left:86.3%">100</span><span style="left:100%">300</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">Gecikme</div><div class="v mono" id="livePing">—</div></div>
+      <div class="stat"><div class="k">Jitter</div><div class="v mono" id="liveJit">—</div></div>
+      <div class="stat"><div class="k">Yükleme</div><div class="v mono" id="liveUp">—</div></div>
+    </div>
+    <div class="phase" id="phase">Ölçüme hazır.</div>
+  </div>
+</section>
+
+<!-- ============================================================ KONTROL -->
+<section>
+  <div class="field" style="margin-top:0">
+    <label for="label">Bulunduğun yerin adı <span style="color:var(--faint)">(isteğe bağlı ama çok işe yarar)</span></label>
+    <input type="text" id="label" list="labels" placeholder="ör. Balkon, Mutfak, Sokak kapısı" autocomplete="off" enterkeyhint="done">
+    <datalist id="labels"></datalist>
+    <div class="chips" id="labelChips"></div>
+    <div class="hint">GPS bina içinde odaları ayırt edemez; isim verirsen ölçümler doğru yerde toplanır.</div>
+  </div>
+
+</section>
+
+<!-- ============================================================ REHBER -->
+<section id="guideCard" hidden>
+  <h2>En iyi nokta</h2>
+  <div class="guide" style="margin-top:10px">
+    <div class="arrow">
+      <svg id="arrowSvg" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 21V4"/><path d="M6 10l6-6 6 6"/>
+      </svg>
+    </div>
+    <div class="grow">
+      <div class="name" id="guideName">—</div>
+      <div class="det" id="guideDet">—</div>
+    </div>
+  </div>
+  <div class="row wrap" style="margin-top:12px">
+    <button class="btn sm" id="compassBtn" hidden>Pusulayı aç</button>
+  </div>
+</section>
+
+<!-- ============================================================ HARİTA -->
+<section id="mapCard" hidden>
+  <h2>Ölçüm haritası</h2>
+  <canvas id="map" style="margin-top:10px"></canvas>
+  <div class="hint" id="mapHint">Yeşil = hızlı, kırmızı = yavaş. Halka senin konumun, kesikli çizgi en iyi noktayı gösterir.</div>
+</section>
+
+<!-- ============================================================ LİSTE -->
+<section>
+  <div class="row"><h2 class="grow">Noktalar</h2><span class="sub mono" id="countLbl"></span></div>
+  <div id="list"><div class="empty">Henüz ölçüm yok. Bir yer adı yazıp <b>ÖLÇ</b>'e bas, sonra birkaç adım yürüyüp tekrar ölç.</div></div>
+</section>
+
+<!-- ============================================================ AYARLAR -->
+<section>
+  <details>
+    <summary>Ayarlar ve veri kullanımı</summary>
+
+    <div class="warnbox">Her ölçüm <b>mobil veri harcar</b>. Aşağıdaki bütçe dolunca uygulama kendini durdurur.</div>
+
+    <div class="field">
+      <label for="interval">Otomatik ölçüm aralığı</label>
+      <select id="interval">
+        <option value="0">Aralıksız (arka arkaya)</option>
+        <option value="10">10 saniye</option>
+        <option value="20" selected>20 saniye</option>
+        <option value="30">30 saniye</option>
+        <option value="60">60 saniye</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="budget">Veri bütçesi</label>
+      <select id="budget">
+        <option value="50">50 MB</option>
+        <option value="100">100 MB</option>
+        <option value="250" selected>250 MB</option>
+        <option value="500">500 MB</option>
+        <option value="0">Sınırsız</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="upTest">Yükleme (upload) hızı da ölçülsün mü?</label>
+      <select id="upTest">
+        <option value="0" selected>Hayır — daha az veri harcar</option>
+        <option value="1">Evet</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="endpoint">Ölçüm sunucusu</label>
+      <select id="endpoint">
+        <option value="https://speed.cloudflare.com">Cloudflare (varsayılan)</option>
+        <option value="custom">Kendi adresim…</option>
+      </select>
+      <input type="text" id="endpointCustom" placeholder="https://…" hidden style="margin-top:8px">
+      <div class="hint">Adres, <code>/__down?bytes=N</code> ve <code>/__up</code> uçlarını CORS ile sunmalıdır.</div>
+      <button class="btn sm" id="testEp" style="margin-top:8px">Sunucuyu test et</button>
+    </div>
+
+    <div class="row wrap" style="margin-top:14px">
+      <button class="btn sm" id="exportCsv">CSV indir</button>
+      <button class="btn sm" id="exportJson">JSON indir</button>
+      <button class="btn sm" id="clearAll">Tümünü sil</button>
+    </div>
+  </details>
+
+  <details>
+    <summary>Nasıl doğru ölçülür?</summary>
+    <p class="note">
+      1. <b>Wi-Fi'yi kapat</b> — açıkken hücresel değil Wi-Fi hızını ölçersin.<br>
+      2. Her noktada <b>2–3 ölçüm</b> al; şebeke anlık dalgalanır, tek ölçüm yanıltır.<br>
+      3. Telefonu elinde normal tutuşunla tut; avucun anteni kapatır.<br>
+      4. Pencere kenarı, balkon, üst kat ve dış duvara yakın noktaları dene.<br>
+      5. Sıralama <b>medyan</b> hıza göre yapılır; tek seferlik şanslı ölçüm başa geçemez.
+    </p>
+    <p class="note" style="color:var(--faint)">
+      Not: Ölçülen değer, o an tarayıcının elde ettiği gerçek aktarım hızıdır — sinyal
+      çubuğu değil. Sunucu yoğunluğu ve şebeke kalabalığı da sonucu etkiler.
+    </p>
+  </details>
+</section>
+
+<footer>Veriler yalnızca telefonunda saklanır, hiçbir yere gönderilmez.</footer>
+
+<div class="dock">
+  <button class="btn primary" id="measure">ÖLÇ</button>
+  <button class="btn" id="autoBtn" title="Belirli aralıklarla otomatik ölçer">Otomatik</button>
+</div>
+
+<script>
+"use strict";
+/* =====================================================================
+   Sinyal Haritası — hücresel indirme hızını konumla birlikte ölçer,
+   noktaları sıralar ve en iyi noktaya yön tarifi verir.
+   ===================================================================== */
+
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const STORE = "sinyal-haritasi:v1";
+
+const DOWN_TIMEOUT = 12000;   // ms — çok yavaş şebekede kısmi veriyle hesaplarız
+const UP_TIMEOUT   = 12000;
+const TARGET_SEC   = 2.5;     // indirmenin hedef süresi; boyut buna göre uyarlanır
+const MIN_BYTES    = 128 * 1024;
+const MAX_BYTES    = 8 * 1024 * 1024;   // veri israfına karşı üst sınır
+const CLUSTER_M    = 20;      // etiketsiz ölçümler bu yarıçapta tek nokta sayılır
+
+const state = {
+  points: [],
+  bytesUsed: 0,
+  nextBytes: 1024 * 1024,
+  pos: null,          // {lat, lon, acc, t}
+  geoErr: null,
+  heading: null,      // pusula (derece, kuzey = 0)
+  auto: false,
+  busy: false,
+  fails: 0,
+  settings: { interval: 20, budget: 250, upTest: 0, endpoint: "https://speed.cloudflare.com" },
+};
+let autoTimer = null, wakeLock = null;
+
+/* ------------------------------------------------------------ kalıcılık */
+function save() {
+  try {
+    localStorage.setItem(STORE, JSON.stringify({
+      points: state.points, bytesUsed: state.bytesUsed, settings: state.settings,
+    }));
+  } catch (e) { /* kota dolu olabilir — ölçüme engel değil */ }
+}
+function load() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORE) || "{}");
+    if (Array.isArray(raw.points)) state.points = raw.points;
+    if (Number.isFinite(raw.bytesUsed)) state.bytesUsed = raw.bytesUsed;
+    Object.assign(state.settings, raw.settings || {});
+  } catch (e) { /* bozuk kayıt — sıfırdan başla */ }
+}
+
+/* ------------------------------------------------------------ yardımcı */
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const rnd = () => Math.random().toString(36).slice(2);
+const fmt = (n, d = 1) => Number(n).toLocaleString("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtMB = b => b >= 1024 ** 3 ? fmt(b / 1024 ** 3, 2) + " GB" : fmt(b / 1024 ** 2, 1) + " MB";
+const median = a => { const s = [...a].sort((x, y) => x - y); const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+
+function endpoint() {
+  const s = state.settings.endpoint;
+  return (s === "custom" ? ($("#endpointCustom").value.trim() || "https://speed.cloudflare.com") : s).replace(/\/+$/, "");
+}
+
+/** Hızı 0,1–300 Mbit/s arası logaritmik ölçekte 0–1 orana çevirir. */
+function speedRatio(mbps) {
+  const lo = Math.log10(0.1), hi = Math.log10(300);
+  return clamp((Math.log10(clamp(mbps, 0.1, 300)) - lo) / (hi - lo), 0, 1);
+}
+/** Hıza göre renk: kırmızı → sarı → yeşil. */
+function speedColor(mbps) {
+  const r = speedRatio(mbps);
+  const h = r * 130;                       // 0 = kırmızı, 130 = yeşil
+  return `hsl(${h} 72% ${r < .2 ? 52 : 46}%)`;
+}
+
+/* Haversine mesafe (m) ve kerteriz (derece, kuzeyden saat yönünde) */
+function distM(a, b) {
+  const R = 6371000, rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad, dLon = (b.lon - a.lon) * rad;
+  const la1 = a.lat * rad, la2 = b.lat * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function bearingDeg(a, b) {
+  const rad = Math.PI / 180;
+  const la1 = a.lat * rad, la2 = b.lat * rad, dLon = (b.lon - a.lon) * rad;
+  const y = Math.sin(dLon) * Math.cos(la2);
+  const x = Math.cos(la1) * Math.sin(la2) - Math.sin(la1) * Math.cos(la2) * Math.cos(dLon);
+  return (Math.atan2(y, x) / rad + 360) % 360;
+}
+const CARD = ["kuzey","kuzey-kuzeydoğu","kuzeydoğu","doğu-kuzeydoğu","doğu","doğu-güneydoğu","güneydoğu","güney-güneydoğu",
+              "güney","güney-güneybatı","güneybatı","batı-güneybatı","batı","batı-kuzeybatı","kuzeybatı","kuzey-kuzeybatı"];
+const cardinal = d => CARD[Math.round(d / 22.5) % 16];
+
+/* ------------------------------------------------------------ ölçüm */
+async function pingTest(n = 5) {
+  const url = endpoint() + "/__down?bytes=0";
+  const times = [];
+  for (let i = 0; i < n; i++) {
+    const t0 = performance.now();
+    try {
+      await fetch(`${url}&r=${rnd()}`, { cache: "no-store" });
+      const dt = performance.now() - t0;
+      if (i > 0) times.push(dt);              // ilk istek bağlantı kurulumunu içerir
+    } catch (e) { /* tek bir ping düşebilir */ }
+  }
+  if (!times.length) throw new Error("Sunucuya ulaşılamadı");
+  const min = Math.min(...times);
+  const jitter = times.length > 1
+    ? times.slice(1).reduce((s, v, i) => s + Math.abs(v - times[i]), 0) / (times.length - 1) : 0;
+  return { ping: min, jitter };
+}
+
+async function downloadTest(bytes, onProgress) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), DOWN_TIMEOUT);
+  const t0 = performance.now();
+  let total = 0, afterFirst = 0, tFirst = 0, tLast = 0, partial = false;
+  try {
+    const res = await fetch(`${endpoint()}/__down?bytes=${bytes}&r=${rnd()}`,
+      { cache: "no-store", signal: ctrl.signal });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    if (res.body && res.body.getReader) {
+      const reader = res.body.getReader();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const now = performance.now();
+        total += value.length;
+        if (!tFirst) tFirst = now; else afterFirst += value.length;
+        tLast = now;
+        if (onProgress && tLast - tFirst > 300)
+          onProgress(afterFirst * 8 / ((tLast - tFirst) / 1000) / 1e6);
+      }
+    } else {                                   // akış desteklemeyen tarayıcılar
+      const buf = await res.arrayBuffer();
+      total = buf.byteLength; tLast = performance.now();
+    }
+  } catch (e) {
+    if (ctrl.signal.aborted) partial = true;   // süre doldu: eldeki veriyle hesapla
+    else throw e;
+  } finally {
+    clearTimeout(timer);
+    state.bytesUsed += total;
+  }
+
+  // İlk parçayı dışlamak TTFB'yi hesaptan çıkarır; yeterli veri yoksa tümünü kullan.
+  const useAfter = afterFirst > 64 * 1024 && tLast - tFirst > 300;
+  const b  = useAfter ? afterFirst : total;
+  const ms = useAfter ? tLast - tFirst : tLast - t0;
+  if (b < 16 * 1024 || ms < 150) throw new Error("Ölçüm alınamadı (bağlantı çok zayıf)");
+  return { mbps: b * 8 / (ms / 1000) / 1e6, bytes: total, ms, partial };
+}
+
+/** Yükleme hızı. Transfer çok kısa sürerse ölçüm anlamsızdır; bir kez büyüterek tekrar dener. */
+async function uploadTest(bytes = 512 * 1024) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), UP_TIMEOUT);
+    const t0 = performance.now();
+    try {
+      await fetch(`${endpoint()}/__up?r=${rnd()}`, {
+        method: "POST", body: new Blob([new Uint8Array(bytes)]), cache: "no-store", signal: ctrl.signal,
+      });
+      const ms = performance.now() - t0;
+      state.bytesUsed += bytes;
+      if (ms >= 250 || attempt === 1) return ms > 40 ? bytes * 8 / (ms / 1000) / 1e6 : null;
+      bytes *= 6;                       // çok hızlı bitti: daha büyük yükle, ölçüm anlamlı olsun
+    } catch (e) {
+      state.bytesUsed += bytes;
+      return null;
+    } finally { clearTimeout(timer); }
+  }
+  return null;
+}
+
+/** Bir ölçüm turu: ping → indirme → (isteğe bağlı) yükleme → kaydet. */
+async function runMeasurement() {
+  if (state.busy) return;
+  const budget = state.settings.budget * 1024 * 1024;
+  if (budget && state.bytesUsed >= budget) {
+    stopAuto();
+    setPhase("Veri bütçesi doldu. Ayarlardan artırabilirsin.", "warn");
+    return;
+  }
+
+  state.busy = true;
+  $("#measure").disabled = true;
+  setLive({ speed: null, ping: null, jitter: null, up: null });
+
+  const label = $("#label").value.trim();
+  const posAtStart = state.pos;
+  const rec = { id: Date.now() + "-" + rnd().slice(0, 4), t: Date.now(), label };
+
+  try {
+    setPhase("Gecikme ölçülüyor…");
+    const { ping, jitter } = await pingTest();
+    rec.ping = Math.round(ping); rec.jitter = Math.round(jitter);
+    $("#livePing").textContent = rec.ping + " ms";
+    $("#liveJit").textContent  = rec.jitter + " ms";
+
+    setPhase(`İndiriliyor… (${fmtMB(state.nextBytes)})`);
+    const dl = await downloadTest(state.nextBytes, m => setLive({ speed: m }));
+    rec.mbps = dl.mbps;
+    rec.partial = dl.partial || false;
+
+    // Sonraki tur için boyutu ~TARGET_SEC'lik transfere ayarla (veri israfını önler).
+    state.nextBytes = Math.round(clamp(dl.mbps * 1e6 / 8 * TARGET_SEC, MIN_BYTES, MAX_BYTES));
+
+    if (state.settings.upTest) {
+      setPhase("Yükleme ölçülüyor…");
+      rec.upMbps = await uploadTest();
+      $("#liveUp").textContent = rec.upMbps ? fmt(rec.upMbps) : "—";
+    }
+
+    const p = state.pos || posAtStart;
+    if (p) { rec.lat = p.lat; rec.lon = p.lon; rec.acc = p.acc; }
+    const c = navigator.connection;
+    if (c) { rec.net = c.effectiveType || null; rec.netType = c.type || null; }
+
+    setLive({ speed: rec.mbps });
+    state.points.push(rec);
+    state.fails = 0;
+
+    const best = Math.max(...state.points.map(x => x.mbps || 0));
+    const isBest = rec.mbps >= best && state.points.length > 1;
+    setPhase(isBest ? "★ Şimdiye kadarki en iyi nokta!" : "Ölçüm kaydedildi.", isBest ? "ok" : "");
+    if (isBest && navigator.vibrate) navigator.vibrate([40, 60, 40]);
+
+  } catch (err) {
+    state.fails++;
+    rec.mbps = 0; rec.error = String(err.message || err);
+    if (state.pos) { rec.lat = state.pos.lat; rec.lon = state.pos.lon; rec.acc = state.pos.acc; }
+    state.points.push(rec);
+    setPhase("Ölçüm başarısız: " + rec.error + " (kapsama dışı olarak kaydedildi)", "bad");
+    if (state.fails >= 5 && state.auto) { stopAuto(); setPhase("Üst üste 5 ölçüm başarısız — otomatik mod durduruldu.", "bad"); }
+  } finally {
+    state.busy = false;
+    $("#measure").disabled = false;
+    save(); render();
+  }
+}
+
+/* ------------------------------------------------------------ otomatik mod */
+async function startAuto() {
+  if (state.auto) return;
+  const budget = state.settings.budget * 1024 * 1024;
+  if (budget && state.bytesUsed >= budget) { setPhase("Veri bütçesi dolu.", "warn"); return; }
+  state.auto = true; state.fails = 0;
+  $("#autoBtn").textContent = "Durdur";
+  $("#autoBtn").classList.add("stop");
+  try { if (navigator.wakeLock) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) { /* opsiyonel */ }
+  loopAuto();
+}
+function stopAuto() {
+  state.auto = false;
+  clearTimeout(autoTimer);
+  $("#autoBtn").textContent = "Otomatik";
+  $("#autoBtn").classList.remove("stop");
+  if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+}
+async function loopAuto() {
+  if (!state.auto) return;
+  await runMeasurement();
+  if (!state.auto) return;
+  const gap = state.settings.interval * 1000;
+  if (gap) setPhase(`Sonraki ölçüm ${state.settings.interval} sn sonra — yürümeye devam et.`);
+  autoTimer = setTimeout(loopAuto, gap);
+}
+
+/* ------------------------------------------------------------ konum */
+function startGeo() {
+  if (!navigator.geolocation) { state.geoErr = "Bu tarayıcı konum desteklemiyor"; return render(); }
+  navigator.geolocation.watchPosition(
+    p => {
+      state.geoErr = null;
+      state.pos = { lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy, t: p.timestamp };
+      render();
+    },
+    e => { state.geoErr = e.code === 1 ? "Konum izni verilmedi" : "Konum alınamıyor"; render(); },
+    { enableHighAccuracy: true, maximumAge: 3000, timeout: 20000 }
+  );
+}
+
+function initCompass() {
+  const needsPerm = typeof DeviceOrientationEvent !== "undefined" &&
+                    typeof DeviceOrientationEvent.requestPermission === "function";
+  const attach = () => {
+    const h = e => {
+      const deg = e.webkitCompassHeading != null ? e.webkitCompassHeading
+                : (e.absolute && e.alpha != null ? (360 - e.alpha) % 360 : null);
+      if (deg != null) { state.heading = deg; renderGuide(); }
+    };
+    window.addEventListener("deviceorientationabsolute", h, true);
+    window.addEventListener("deviceorientation", h, true);
+  };
+  if (needsPerm) {
+    const b = $("#compassBtn"); b.hidden = false;
+    b.onclick = () => DeviceOrientationEvent.requestPermission()
+      .then(r => { if (r === "granted") { attach(); b.hidden = true; } })
+      .catch(() => {});
+  } else if (window.DeviceOrientationEvent) attach();
+}
+
+/* ------------------------------------------------------------ gruplama */
+/** Ölçümleri noktalara ayırır: etiketi olanlar isme göre, olmayanlar konuma göre. */
+function buildSpots() {
+  const spots = [];
+  for (const p of state.points) {
+    const key = p.label ? "l:" + p.label.toLocaleLowerCase("tr") : null;
+    let spot = key ? spots.find(s => s.key === key) : null;
+    if (!spot && !key && p.lat != null)
+      spot = spots.find(s => !s.name && s.lat != null && distM(s, p) <= CLUSTER_M);
+    if (!spot && !key && p.lat == null)
+      spot = spots.find(s => !s.name && s.lat == null);
+    if (!spot) {
+      spot = { key: key || "g:" + spots.length, name: p.label || null, lat: null, lon: null, pts: [] };
+      spots.push(spot);
+    }
+    spot.pts.push(p);
+    const geo = spot.pts.filter(x => x.lat != null);
+    if (geo.length) {
+      spot.lat = geo.reduce((s, x) => s + x.lat, 0) / geo.length;
+      spot.lon = geo.reduce((s, x) => s + x.lon, 0) / geo.length;
+    }
+  }
+  spots.forEach((s, i) => {
+    const sp = s.pts.map(p => p.mbps || 0);
+    s.med  = median(sp);
+    s.max  = Math.max(...sp);
+    s.n    = s.pts.length;
+    s.last = Math.max(...s.pts.map(p => p.t));
+    const pings = s.pts.filter(p => p.ping).map(p => p.ping);
+    s.ping = pings.length ? Math.round(median(pings)) : null;
+    if (!s.name) s.name = "Nokta " + (i + 1);
+  });
+  spots.sort((a, b) => b.med - a.med || b.max - a.max);
+  return spots;
+}
+
+/* ------------------------------------------------------------ arayüz */
+function setPhase(txt, kind = "") {
+  const el = $("#phase");
+  el.textContent = txt;
+  el.style.color = kind === "ok" ? "var(--accent)" : kind === "bad" ? "var(--danger)"
+                 : kind === "warn" ? "var(--warn)" : "var(--muted)";
+}
+function setLive({ speed, ping, jitter, up } = {}) {
+  if (speed !== undefined) {
+    $("#liveSpeed").textContent = speed == null ? "—" : fmt(speed, speed >= 10 ? 1 : 2);
+    const bar = $("#liveBar");
+    bar.style.width = (speed == null ? 0 : speedRatio(speed) * 100) + "%";
+    if (speed != null) bar.style.background = speedColor(speed);
+  }
+  if (ping   !== undefined) $("#livePing").textContent = ping   == null ? "—" : ping + " ms";
+  if (jitter !== undefined) $("#liveJit").textContent  = jitter == null ? "—" : jitter + " ms";
+  if (up     !== undefined) $("#liveUp").textContent   = up == null ? (state.settings.upTest ? "—" : "kapalı") : fmt(up);
+}
+
+function renderStatus() {
+  const bits = [];
+  const p = state.pos;
+  if (p) {
+    const cls = p.acc <= 15 ? "ok" : p.acc <= 40 ? "warn" : "bad";
+    bits.push(`<span class="chip"><i class="dot ${cls}"></i>GPS <b>±${Math.round(p.acc)} m</b></span>`);
+  } else {
+    bits.push(`<span class="chip"><i class="dot bad"></i>${state.geoErr || "Konum bekleniyor…"}</span>`);
+  }
+  const c = navigator.connection;
+  if (c && c.effectiveType)
+    bits.push(`<span class="chip"><i class="dot"></i>Şebeke <b>${c.effectiveType.toUpperCase()}</b></span>`);
+  const budget = state.settings.budget;
+  const over = budget && state.bytesUsed >= budget * 1024 ** 2;
+  bits.push(`<span class="chip"><i class="dot ${over ? "bad" : ""}"></i>Veri <b>${fmtMB(state.bytesUsed)}</b>${budget ? " / " + budget + " MB" : ""}</span>`);
+  $("#status").innerHTML = bits.join("");
+}
+
+function renderGuide(spots) {
+  spots = spots || buildSpots();
+  const card = $("#guideCard");
+  const best = spots[0];
+  if (!best || spots.length < 2) { card.hidden = true; return; }
+  card.hidden = false;
+  $("#guideName").textContent = `${best.name} — ${fmt(best.med)} Mbit/s`;
+
+  const arrow = $("#arrowSvg");
+  const here = state.pos;
+  if (here && best.lat != null) {
+    const d = distM(here, best);
+    const b = bearingDeg(here, best);
+    const rel = state.heading != null ? (b - state.heading + 360) % 360 : b;
+    arrow.style.transform = `rotate(${rel}deg)`;
+    arrow.style.opacity = 1;
+    $("#guideDet").textContent = d < (here.acc || 20) / 2
+      ? "Buradasın (GPS doğruluğu içinde)."
+      : `${Math.round(d)} m ${cardinal(b)} yönünde` +
+        (state.heading != null ? " — ok, baktığın yöne göre" : " (ok kuzeye göre)");
+  } else {
+    arrow.style.transform = "rotate(0deg)";
+    arrow.style.opacity = .25;
+    $("#guideDet").textContent = best.n > 1
+      ? `${best.n} ölçümün medyanı · en iyi ${fmt(best.max)} Mbit/s`
+      : "Konum yok — yön tarifi için GPS izni gerekir.";
+  }
+}
+
+function renderList(spots) {
+  const el = $("#list");
+  $("#countLbl").textContent = state.points.length ? `${state.points.length} ölçüm · ${spots.length} nokta` : "";
+  if (!spots.length) {
+    el.innerHTML = `<div class="empty">Henüz ölçüm yok. Bir yer adı yazıp <b>ÖLÇ</b>'e bas, sonra birkaç adım yürüyüp tekrar ölç.</div>`;
+    return;
+  }
+  const top = spots[0].med || 1;
+  el.innerHTML = spots.map((s, i) => {
+    const dist = state.pos && s.lat != null ? Math.round(distM(state.pos, s)) : null;
+    const meta = [
+      `${s.n} ölçüm`,
+      s.ping ? `${s.ping} ms` : null,
+      dist != null ? `${dist} m uzakta` : null,
+    ].filter(Boolean).join(" · ");
+    return `<div class="spot ${i === 0 ? "best" : ""}">
+      <div class="rank">${i + 1}</div>
+      <div class="grow">
+        <div class="nm">${esc(s.name)}</div>
+        <div class="mt">${meta}</div>
+        <div class="minibar"><i style="width:${clamp(s.med / top * 100, 3, 100)}%;background:${speedColor(s.med)}"></i></div>
+      </div>
+      <div class="sp mono" style="color:${speedColor(s.med)}">${fmt(s.med)}<em>Mbit/s medyan</em></div>
+      <button class="btn sm" data-del="${esc(s.key)}" title="Bu noktayı sil" aria-label="${esc(s.name)} noktasını sil">✕</button>
+    </div>`;
+  }).join("");
+
+  $$("[data-del]", el).forEach(b => b.onclick = () => {
+    const spot = spots.find(s => s.key === b.dataset.del);
+    if (!spot || !confirm(`"${spot.name}" noktasındaki ${spot.n} ölçüm silinsin mi?`)) return;
+    const ids = new Set(spot.pts.map(p => p.id));
+    state.points = state.points.filter(p => !ids.has(p.id));
+    save(); render();
+  });
+}
+
+function renderLabels() {
+  const seen = [...new Set(state.points.map(p => p.label).filter(Boolean))].slice(-12).reverse();
+  $("#labels").innerHTML = seen.map(l => `<option value="${esc(l)}">`).join("");
+  $("#labelChips").innerHTML = seen.slice(0, 6)
+    .map(l => `<button class="btn sm" data-lbl="${esc(l)}">${esc(l)}</button>`).join("");
+  $$("[data-lbl]").forEach(b => b.onclick = () => { $("#label").value = b.dataset.lbl; });
+}
+
+/** Ölçümleri, merkeze göre metre cinsinden basit bir yerel haritada çizer. */
+function renderMap(spots) {
+  const geo = spots.filter(s => s.lat != null);
+  const card = $("#mapCard");
+  if (geo.length < 2) { card.hidden = true; return; }
+  card.hidden = false;
+
+  const cv = $("#map"), dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = cv.clientWidth, h = cv.clientHeight;
+  cv.width = w * dpr; cv.height = h * dpr;
+  const g = cv.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+
+  const pts = geo.slice();
+  if (state.pos) pts.push({ lat: state.pos.lat, lon: state.pos.lon, me: true });
+  const lat0 = pts.reduce((s, p) => s + p.lat, 0) / pts.length;
+  const lon0 = pts.reduce((s, p) => s + p.lon, 0) / pts.length;
+  const mPerLat = 111320, mPerLon = 111320 * Math.cos(lat0 * Math.PI / 180);
+  const xy = pts.map(p => ({ ...p, x: (p.lon - lon0) * mPerLon, y: -(p.lat - lat0) * mPerLat }));
+
+  const span = Math.max(10, ...xy.map(p => Math.max(Math.abs(p.x), Math.abs(p.y))) ) * 2.3;
+  const scale = Math.min(w, h) / span;
+  const px = p => ({ x: w / 2 + p.x * scale, y: h / 2 + p.y * scale });
+
+  // ölçek halkaları
+  const step = span / 4 < 15 ? 5 : span / 4 < 60 ? 25 : 100;
+  g.strokeStyle = cssVar("--border");
+  g.fillStyle = cssVar("--faint");
+  g.font = "10px system-ui"; g.textAlign = "center";
+  for (let r = step; r * scale < Math.min(w, h) / 2; r += step) {
+    g.beginPath(); g.arc(w / 2, h / 2, r * scale, 0, 7); g.stroke();
+    g.fillText(r + " m", w / 2, h / 2 - r * scale - 3);
+  }
+  g.fillText("K ↑", w / 2, 12);
+
+  // en iyi noktaya çizgi
+  const me = xy.find(p => p.me), bestPt = xy.find(p => p.key === spots[0].key);
+  if (me && bestPt) {
+    const a = px(me), b = px(bestPt);
+    g.strokeStyle = cssVar("--accent");
+    g.setLineDash([4, 4]); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); g.setLineDash([]);
+  }
+
+  // noktalar (üst üste düşen etiketleri aşağı kaydırarak çiz)
+  const labels = [];
+  g.font = "11px system-ui";
+  for (const p of xy) {
+    if (p.me) continue;
+    const c = px(p), r = clamp(6 + Math.log2(p.n + 1) * 3, 6, 16);
+    g.fillStyle = speedColor(p.med);
+    g.beginPath(); g.arc(c.x, c.y, r, 0, 7); g.fill();
+
+    let ly = c.y + r + 12;
+    while (labels.some(l => Math.abs(l.x - c.x) < 30 && Math.abs(l.y - ly) < 12)) ly += 13;
+    labels.push({ x: c.x, y: ly });
+    g.fillStyle = cssVar("--text");
+    g.fillText(fmt(p.med, p.med >= 10 ? 0 : 1), c.x, ly);
+  }
+  if (me) {                                  // konum işareti: her iki temada da görünür
+    const c = px(me);
+    g.lineWidth = 5; g.strokeStyle = cssVar("--bg");
+    g.beginPath(); g.arc(c.x, c.y, 8, 0, 7); g.stroke();
+    g.lineWidth = 2.5; g.strokeStyle = cssVar("--text");
+    g.beginPath(); g.arc(c.x, c.y, 8, 0, 7); g.stroke();
+    g.lineWidth = 1;
+  }
+}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const cssVar = n => getComputedStyle(document.body).getPropertyValue(n).trim() || "#888";
+
+function render() {
+  const spots = buildSpots();
+  renderStatus(); renderGuide(spots); renderList(spots); renderLabels(); renderMap(spots);
+}
+
+/* ------------------------------------------------------------ dışa aktarma */
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = Object.assign(document.createElement("a"), { href: url, download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+function toCsv() {
+  const head = ["zaman", "etiket", "indirme_mbps", "yukleme_mbps", "ping_ms", "jitter_ms", "enlem", "boylam", "gps_dogruluk_m", "sebeke", "hata"];
+  const rows = state.points.map(p => [
+    new Date(p.t).toISOString(), p.label || "", (p.mbps ?? "").toString().replace(".", ","),
+    (p.upMbps ?? "").toString().replace(".", ","), p.ping ?? "", p.jitter ?? "",
+    p.lat ?? "", p.lon ?? "", p.acc != null ? Math.round(p.acc) : "", p.net || "", p.error || "",
+  ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";"));
+  return [head.join(";"), ...rows].join("\r\n");
+}
+
+/* ------------------------------------------------------------ başlangıç */
+function bindSettings() {
+  const s = state.settings;
+  $("#interval").value = s.interval;
+  $("#budget").value   = s.budget;
+  $("#upTest").value   = s.upTest;
+  $("#endpoint").value = ["https://speed.cloudflare.com", "custom"].includes(s.endpoint) ? s.endpoint : "custom";
+  if ($("#endpoint").value === "custom") {
+    $("#endpointCustom").hidden = false;
+    if (s.endpoint !== "custom") $("#endpointCustom").value = s.endpoint;
+  }
+  $("#interval").onchange = e => { s.interval = +e.target.value; save(); };
+  $("#budget").onchange   = e => { s.budget   = +e.target.value; save(); render(); };
+  $("#upTest").onchange   = e => { s.upTest   = +e.target.value; save(); setLive({ up: null }); };
+  $("#endpoint").onchange = e => {
+    s.endpoint = e.target.value;
+    $("#endpointCustom").hidden = e.target.value !== "custom";
+    save();
+  };
+  $("#endpointCustom").onchange = () => save();
+}
+
+function init() {
+  load();
+  bindSettings();
+  startGeo();
+  initCompass();
+  setLive({ up: null });
+  render();
+
+  $("#measure").onclick = () => runMeasurement();
+  $("#autoBtn").onclick = () => {
+    if (state.auto) { stopAuto(); setPhase("Otomatik mod durduruldu."); return; }
+    const msg = state.settings.budget
+      ? `Otomatik mod, ${state.settings.interval ? state.settings.interval + " saniyede bir" : "aralıksız"} ölçüm yapar ve mobil veri harcar.\n\nBütçe: ${state.settings.budget} MB (şu ana kadar ${fmtMB(state.bytesUsed)}).\n\nBaşlatılsın mı?`
+      : "Otomatik mod sınırsız veri harcayacak şekilde ayarlı. Başlatılsın mı?";
+    if (confirm(msg)) startAuto();
+  };
+  $("#testEp").onclick = async () => {
+    setPhase("Sunucu test ediliyor…");
+    try {
+      const t0 = performance.now();
+      const r = await fetch(`${endpoint()}/__down?bytes=100000&r=${rnd()}`, { cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const buf = await r.arrayBuffer();
+      state.bytesUsed += buf.byteLength; save(); renderStatus();
+      setPhase(`Sunucu çalışıyor — ${fmtMB(buf.byteLength)} veri ${Math.round(performance.now() - t0)} ms'de geldi.`, "ok");
+    } catch (e) {
+      setPhase("Sunucuya ulaşılamadı (" + (e.message || e) + "). Adresi kontrol et ya da başka bir sunucu seç.", "bad");
+    }
+  };
+  $("#exportCsv").onclick  = () => download("sinyal-haritasi.csv", "﻿" + toCsv(), "text/csv;charset=utf-8");
+  $("#exportJson").onclick = () => download("sinyal-haritasi.json", JSON.stringify(state.points, null, 2), "application/json");
+  $("#clearAll").onclick   = () => {
+    if (!confirm("Tüm ölçümler ve veri sayacı silinsin mi?")) return;
+    state.points = []; state.bytesUsed = 0; save(); render();
+    setPhase("Temizlendi.");
+  };
+
+  // Ekran uykuya dalıp uyanınca wake lock'u geri al
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible" && state.auto && navigator.wakeLock && !wakeLock) {
+      try { wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
+    }
+  });
+  window.addEventListener("resize", () => renderMap(buildSpots()));
+  if (navigator.connection) navigator.connection.addEventListener?.("change", renderStatus);
+
+  if (location.protocol === "https:" && "serviceWorker" in navigator)
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+
+  if (location.protocol === "file:")
+    setPhase("Uyarı: dosyadan açıldı — konum ve ölçüm engellenebilir, https adresten aç.", "warn");
+}
+init();
+</script>
+</body>
+</html>
