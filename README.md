@@ -162,3 +162,11 @@ python3 -m http.server 8000
 - Marka adı "DTF·LAB", iletişim ve istatistikler yer tutucudur.
 
 _Bu bir taslaktır — yön, içerik ve öncelikler geri bildirime göre uyarlanır._
+
+---
+
+## 📦 Bu depodaki diğer projeler
+
+- **[`sinyal-haritasi/`](sinyal-haritasi/)** — Telefonu gezdirerek en iyi
+  hücresel internet hızına sahip noktayı bulmanı sağlayan ölçüm uygulaması
+  (tek dosyalık web uygulaması, kurulum gerektirmez).

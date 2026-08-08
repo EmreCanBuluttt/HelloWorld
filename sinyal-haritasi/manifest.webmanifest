@@ -1,0 +1,17 @@
+{
+  "name": "Sinyal Haritası",
+  "short_name": "Sinyal",
+  "description": "Telefonu gezdirerek en iyi hücresel internet hızına sahip noktayı bul.",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0f14",
+  "theme_color": "#0b0f14",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
