@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Sinyal Haritası — En iyi hız noktasını bul</title>
 <style>
 /* ---------------------------------------------------------------- tokens */
@@ -337,6 +338,8 @@ const STORE = "sinyal-haritasi:v1";
 
 const DOWN_TIMEOUT = 12000;   // ms — çok yavaş şebekede kısmi veriyle hesaplarız
 const UP_TIMEOUT   = 12000;
+const PING_TIMEOUT = 5000;    // ölü bölgede arayüz kilitlenmesin
+const IS_FILE = location.protocol === "file:";
 const TARGET_SEC   = 2.5;     // indirmenin hedef süresi; boyut buna göre uyarlanır
 const MIN_BYTES    = 128 * 1024;
 const MAX_BYTES    = 8 * 1024 * 1024;   // veri israfına karşı üst sınır
@@ -463,9 +466,14 @@ async function pingTest(n = 5) {
   for (let i = 0; i < n; i++) {
     const t0 = performance.now();
     try {
-      const res = src.kind === "local"
-        ? await fetch(PING_FILE, { cache: "no-store" })
-        : await fetch(`${src.base}/__down?bytes=0&r=${rnd()}`, { cache: "no-store" });
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), PING_TIMEOUT);
+      let res;
+      try {
+        res = src.kind === "local"
+          ? await fetch(PING_FILE, { cache: "no-store", signal: ctrl.signal })
+          : await fetch(`${src.base}/__down?bytes=0&r=${rnd()}`, { cache: "no-store", signal: ctrl.signal });
+      } finally { clearTimeout(timer); }
       const dt = performance.now() - t0;       // başlıklar geldi: gidiş-dönüş süresi bu
       if (!res.ok) throw new Error("HTTP " + res.status);
       try { if (res.body) await res.body.cancel(); } catch (e) { /* gövdeyi indirme */ }
@@ -518,12 +526,19 @@ async function downloadTest(bytes, onProgress) {
     state.bytesUsed += total;
   }
 
-  // İlk parçayı dışlamak TTFB'yi hesaptan çıkarır; yeterli veri yoksa tümünü kullan.
-  const useAfter = afterFirst > 64 * 1024 && tLast - tFirst > 300;
-  const b  = useAfter ? afterFirst : total;
-  const ms = useAfter ? tLast - tFirst : tLast - t0;
-  if (b < 16 * 1024 || ms < 150) throw new Error("Ölçüm alınamadı (bağlantı çok zayıf)");
-  return { mbps: b * 8 / (ms / 1000) / 1e6, bytes: total, ms, partial };
+  // Hız = baytlar / o baytların aktığı süre. İlk parçayı dışlamak TTFB'yi
+  // hesaptan çıkarır; o kadar veri yoksa en azından pencereyi TTFB'siz tut.
+  const window = tLast - tFirst;
+  let b, ms;
+  if (tFirst && window >= 200 && afterFirst >= 64 * 1024) { b = afterFirst; ms = window; }
+  else if (tFirst && window >= 200)                       { b = total;      ms = window; }
+  else                                                    { b = total;      ms = tLast - t0; }
+  if (b < 16 * 1024) throw new Error("Ölçüm alınamadı (bağlantı çok zayıf)");
+  ms = Math.max(ms, 1);
+  // Çok kısa süren transfer güvenilir değildir: çağıran daha büyük parçayla
+  // tekrar dener. Eskiden burada hata atılırdı; hızlı şebekede her ölçüm
+  // "kapsama dışı" görünüyordu.
+  return { mbps: b * 8 / (ms / 1000) / 1e6, bytes: total, ms, partial, tooShort: ms < 150 };
 }
 
 /** Yükleme hızı. Transfer çok kısa sürerse ölçüm anlamsızdır; bir kez büyüterek tekrar dener. */
@@ -535,11 +550,13 @@ async function uploadTest(bytes = 512 * 1024) {
     const timer = setTimeout(() => ctrl.abort(), UP_TIMEOUT);
     const t0 = performance.now();
     try {
-      await fetch(`${src.base}/__up?r=${rnd()}`, {
+      const res = await fetch(`${src.base}/__up?r=${rnd()}`, {
         method: "POST", body: new Blob([new Uint8Array(bytes)]), cache: "no-store", signal: ctrl.signal,
       });
       const ms = performance.now() - t0;
       state.bytesUsed += bytes;
+      // Sunucu POST'u reddettiyse ölçülen süre hız değil, hata süresidir.
+      if (!res.ok) return null;
       if (ms >= 250 || attempt === 1) return ms > 40 ? bytes * 8 / (ms / 1000) / 1e6 : null;
       bytes *= 6;                       // çok hızlı bitti: daha büyük yükle, ölçüm anlamlı olsun
     } catch (e) {
@@ -552,7 +569,7 @@ async function uploadTest(bytes = 512 * 1024) {
 
 /** Bir ölçüm turu: ping → indirme → (isteğe bağlı) yükleme → kaydet. */
 async function runMeasurement() {
-  if (state.busy) return;
+  if (state.busy || IS_FILE) return;   // file:// üzerinde sahte 0 Mbit/s kaydı üretme
   const budget = state.settings.budget * 1024 * 1024;
   if (budget && state.bytesUsed >= budget) {
     stopAuto();
@@ -575,10 +592,21 @@ async function runMeasurement() {
     $("#livePing").textContent = rec.ping + " ms";
     $("#liveJit").textContent  = rec.jitter + " ms";
 
-    setPhase(`İndiriliyor… (${fmtMB(state.nextBytes)})`);
-    const dl = await downloadTest(state.nextBytes, m => setLive({ speed: m }));
+    // Bütçeyi aşmamak için istenen boyutu kalan bütçeyle sınırla.
+    const left = budget ? budget - state.bytesUsed : Infinity;
+    let want = clamp(Math.min(state.nextBytes, left), MIN_BYTES, MAX_BYTES);
+
+    setPhase(`İndiriliyor… (${fmtMB(want)})`);
+    let dl = await downloadTest(want, m => setLive({ speed: m }));
+    // Transfer çok kısa sürdüyse sonuç gürültülüdür: bir kez büyütüp tekrar dene.
+    if (dl.tooShort && want < MAX_BYTES && left > want * 2) {
+      want = clamp(want * 8, MIN_BYTES, Math.min(MAX_BYTES, left));
+      setPhase(`Bağlantı hızlı — daha büyük parçayla ölçülüyor… (${fmtMB(want)})`);
+      dl = await downloadTest(want, m => setLive({ speed: m }));
+    }
     rec.mbps = dl.mbps;
     rec.partial = dl.partial || false;
+    if (dl.tooShort) rec.short = true;
 
     // Sonraki tur için boyutu ~TARGET_SEC'lik transfere ayarla (veri israfını önler).
     state.nextBytes = Math.round(clamp(dl.mbps * 1e6 / 8 * TARGET_SEC, MIN_BYTES, MAX_BYTES));
@@ -748,6 +776,8 @@ function renderStatus() {
     bits.push(`<span class="chip"><i class="dot"></i>Şebeke <b>${c.effectiveType.toUpperCase()}</b></span>`);
   if (c && c.type === "wifi")   // Wi-Fi açıkken ölçülen şey hücresel değildir
     bits.push(`<span class="chip"><i class="dot warn"></i><b>Wi-Fi açık</b> — hücresel için kapat</span>`);
+  else if (!c || !c.type)       // iOS bağlantı türünü hiç vermez: hatırlatmakla yetin
+    bits.push(`<span class="chip"><i class="dot"></i>Wi-Fi kapalı olmalı</span>`);
   const budget = state.settings.budget;
   const over = budget && state.bytesUsed >= budget * 1024 ** 2;
   bits.push(`<span class="chip"><i class="dot ${over ? "bad" : ""}"></i>Veri <b>${fmtMB(state.bytesUsed)}</b>${budget ? " / " + budget + " MB" : ""}</span>`);
@@ -959,8 +989,18 @@ function init() {
   bindSettings();
   startGeo();
   initCompass();
+  // Tarayıcının kendi hız tahmini varsa ilk parçayı ona göre seç: hızlı hatta
+  // baştan yeterince büyük ister, yavaş hatta küçük kalır.
+  const conn = navigator.connection;
+  if (conn && conn.downlink > 0)
+    state.nextBytes = Math.round(clamp(conn.downlink * 1e6 / 8 * TARGET_SEC, MIN_BYTES, MAX_BYTES));
+
   setLive({ up: null });
-  $("#intro").hidden = !!localStorage.getItem(STORE + ":intro") || state.points.length > 0;
+  // Depolama engelliyse (iOS "Tüm çerezleri engelle") erişim istisna atar;
+  // korumasız bırakılırsa init() burada durur ve uygulama tümden ölür.
+  let introSeen = false;
+  try { introSeen = !!localStorage.getItem(STORE + ":intro"); } catch (e) {}
+  $("#intro").hidden = introSeen || state.points.length > 0;
   $("#introOk").onclick = () => {
     $("#intro").hidden = true;
     try { localStorage.setItem(STORE + ":intro", "1"); } catch (e) {}
@@ -980,13 +1020,11 @@ function init() {
     try {
       const t0 = performance.now();
       const src = source();
-      const r = await fetch(...downRequest(src, 100000, undefined));
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      const buf = await r.arrayBuffer();
-      state.bytesUsed += buf.byteLength; save(); renderStatus();
-      if (src.kind === "local") state.rangeOk = r.status === 206;
-      const ranged = src.kind === "local" ? (r.status === 206 ? " · Range destekli" : " · Range yok, akış erken kesilerek ölçülür") : "";
-      setPhase(`Kaynak çalışıyor — ${fmtMB(buf.byteLength)} veri ${Math.round(performance.now() - t0)} ms'de geldi${ranged}.`, "ok");
+      const d = await downloadTest(128 * 1024);   // akışlı + zaman aşımlı + bütçeye yazılır
+      save(); renderStatus();
+      const ranged = src.kind === "local"
+        ? (state.rangeOk ? " · Range destekli" : " · Range yok, akış erken kesilerek ölçülür") : "";
+      setPhase(`Kaynak çalışıyor — ${fmtMB(d.bytes)} veri ${Math.round(performance.now() - t0)} ms'de geldi${ranged}.`, "ok");
     } catch (e) {
       setPhase("Kaynağa ulaşılamadı (" + errText(e) + "). Ağını ya da adresi kontrol et.", "bad");
     }
@@ -1008,11 +1046,15 @@ function init() {
   window.addEventListener("resize", () => renderMap(buildSpots()));
   if (navigator.connection) navigator.connection.addEventListener?.("change", renderStatus);
 
-  if (location.protocol === "https:" && "serviceWorker" in navigator)
+  // isSecureContext hem https'i hem de localhost'u kapsar (protokol kontrolü localhost'u kaçırıyordu).
+  if (window.isSecureContext && "serviceWorker" in navigator)
     navigator.serviceWorker.register("sw.js").catch(() => {});
 
-  if (location.protocol === "file:")
-    setPhase("Uyarı: dosyadan açıldı — konum ve ölçüm engellenebilir, https adresten aç.", "warn");
+  if (IS_FILE) {                 // dosyadan açıldığında ölçüm kaynağı yoktur
+    $("#measure").disabled = true;
+    $("#autoBtn").disabled = true;
+    setPhase("Dosyadan açıldı — ölçüm yapılamaz. Uygulamayı https adresinden aç.", "bad");
+  }
 }
 init();
 </script>
