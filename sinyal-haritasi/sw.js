@@ -18,6 +18,12 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== self.location.origin) return;
+  // Yalnızca uygulama kabuğuna karış. Ölçüm trafiği (payload.bin, ping.txt)
+  // dokunulmadan geçmeli: önbelleğe alınırsa ölçüm anlamsızlaşır, ayrıca
+  // kısmi (206) yanıtlar Cache API'ye konulamaz.
+  if (e.request.headers.has("range")) return;
+  const shell = SHELL.map(x => new URL(x, self.registration.scope).pathname);
+  if (!shell.includes(url.pathname)) return;
 
   // Ağ önce: güncel sürümü kaçırmayalım, ama kapsama dışında da açılsın.
   e.respondWith(
