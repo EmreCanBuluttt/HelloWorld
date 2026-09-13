@@ -169,4 +169,5 @@ _Bu bir taslaktır — yön, içerik ve öncelikler geri bildirime göre uyarlan
 
 - **[`sinyal-haritasi/`](sinyal-haritasi/)** — Telefonu gezdirerek en iyi
   hücresel internet hızına sahip noktayı bulmanı sağlayan ölçüm uygulaması.
-  Yayında: <https://emrecanbuluttt.github.io/HelloWorld/sinyal-haritasi/>
+  Adres (Pages açıldıktan sonra):
+  <https://emrecanbuluttt.github.io/HelloWorld/sinyal-haritasi/>
