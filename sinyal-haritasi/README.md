@@ -12,9 +12,14 @@ Sonra noktaları hızlarına göre sıralar ve en iyisine yön tarifi verir.
 
 ## 🚀 Telefonda nasıl açılır?
 
-Site **GitHub Pages'te yayında**; depodaki `.github/workflows/pages.yml` her
-push'ta otomatik yayınlar (ilk çalıştırmada Pages'i kendisi etkinleştirir, elle
-ayar gerekmez). Telefonda şu adresi aç:
+**Tek seferlik kurulum:** depo ayarlarında **Settings → Pages → Build and
+deployment → Source: `GitHub Actions`** seçilmelidir. Actions'ın `GITHUB_TOKEN`'ı
+Pages sitesini *oluşturma* yetkisine sahip değildir, bu yüzden ilk açılış elle
+yapılır. (Alternatif: Source olarak `Deploy from a branch` → varsayılan dal →
+`/ (root)`; kökteki `.nojekyll` sayesinde bu da çalışır.)
+
+Bir kez açıldıktan sonra `.github/workflows/pages.yml` her push'ta otomatik
+yayınlar. Adres:
 
 ```
 https://emrecanbuluttt.github.io/HelloWorld/sinyal-haritasi/

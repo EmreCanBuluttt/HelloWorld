@@ -113,7 +113,9 @@ input[type=text]:focus,select:focus{outline:2px solid var(--accent);outline-offs
 .guide .det{font-size:.85rem;color:var(--muted)}
 
 /* ---------------------------------------------------------------- map */
-#map{width:100%;height:240px;display:block;border-radius:10px;background:var(--surface-2);touch-action:none}
+/* touch-action ayarlanmaz: tuval yalnızca gösterim amaçlı, dokunma olayı
+   dinlemiyor — none olsaydı üstünden yapılan kaydırma sayfayı kaydırmazdı. */
+#map{width:100%;height:240px;display:block;border-radius:10px;background:var(--surface-2)}
 
 /* ---------------------------------------------------------------- list */
 .spot{border-top:1px solid var(--border);padding:11px 0;display:flex;gap:10px;align-items:center}
