@@ -147,6 +147,7 @@ sinyal-haritasi/
 ├── ping.txt              # 1 bayt — gecikme bununla ölçülür
 ├── sw.js                 # kapsama dışında da açılabilsin diye service worker
 ├── manifest.webmanifest  # ana ekrana eklenince uygulama gibi açılması için
+├── icon-180.png          # iOS ana ekran simgesi (SVG kabul etmiyor)
 ├── icon.svg
 └── icon-maskable.svg
 ```
