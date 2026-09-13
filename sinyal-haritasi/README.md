@@ -12,18 +12,18 @@ Sonra noktaları hızlarına göre sıralar ve en iyisine yön tarifi verir.
 
 ## 🚀 Telefonda nasıl açılır?
 
-Uygulamanın **https adresinden** açılması gerekir (konum izni ve service worker
-bunu şart koşar). En kolay yol GitHub Pages:
+Site **GitHub Pages'te yayında**; depodaki `.github/workflows/pages.yml` her
+push'ta otomatik yayınlar (ilk çalıştırmada Pages'i kendisi etkinleştirir, elle
+ayar gerekmez). Telefonda şu adresi aç:
 
-1. Depoda **Settings → Pages** sekmesine gir.
-2. **Source:** `Deploy from a branch`, **Branch:** bu dalı (veya `main`) ve
-   klasör olarak `/ (root)` seç, kaydet.
-3. Bir iki dakika sonra adres hazır olur:
-   `https://emrecanbuluttt.github.io/HelloWorld/sinyal-haritasi/`
-4. Telefonda bu adresi aç → **Ana ekrana ekle** dersen uygulama gibi açılır.
+```
+https://emrecanbuluttt.github.io/HelloWorld/sinyal-haritasi/
+```
+
+**Ana ekrana ekle** dersen ayrı bir uygulama gibi açılır, adres çubuğu olmadan.
 
 > **Önemli:** Ölçüm sırasında **Wi-Fi kapalı** olmalı. Açıkken hücresel şebekeyi
-> değil Wi-Fi'yi ölçersin.
+> değil Wi-Fi'yi ölçersin. Uygulama Wi-Fi'yi tespit edebilirse üstte uyarı gösterir.
 
 Bilgisayarda denemek için:
 
@@ -63,12 +63,15 @@ yanıltamasın diye.
 
 Her turda sırayla:
 
-1. **Gecikme (ping) ve jitter** — boş yanıtla 5 gidiş-dönüş; en düşüğü ping,
-   ardışık farkların ortalaması jitter.
-2. **İndirme hızı** — bir dosya indirilir, veri akarken hız ölçülür.
-   İlk parça (bağlantı kurulum süresi) hesaba katılmaz, böylece sonuç
-   gecikmeden değil gerçek aktarım hızından çıkar.
-3. **Yükleme hızı** — yalnızca ayarlardan açtıysan.
+1. **Gecikme (ping) ve jitter** — 1 baytlık `ping.txt` ile 5 gidiş-dönüş;
+   en düşüğü ping, ardışık farkların ortalaması jitter.
+2. **İndirme hızı** — sitenin yanındaki `payload.bin` dosyasından **Range**
+   isteğiyle tam N bayt indirilir, veri akarken hız ölçülür. İlk parça
+   (bağlantı kurulum süresi) hesaba katılmaz, böylece sonuç gecikmeden değil
+   gerçek aktarım hızından çıkar. Sunucu Range'i yok sayarsa akış hedefe
+   ulaşınca kesilir — dosyanın tamamı asla boşuna inmez.
+3. **Yükleme hızı** — yalnızca uzak bir hız testi sunucusu seçiliysin ve
+   ayarlardan açtıysan (statik dosya POST kabul etmez).
 
 İndirme boyutu **kendini ayarlar**: transferin yaklaşık 2,5 saniye sürmesi
 hedeflenir (en az 128 KB, en çok 8 MB). Yani yavaş şebekede az veri harcanır,
@@ -78,10 +81,17 @@ hızlı şebekede ölçüm anlamlı kalacak kadar büyür.
 kaydedilir** — ölü bölgeleri görmek de en az hızlı noktayı bulmak kadar
 işe yarar.
 
-Varsayılan ölçüm sunucusu **Cloudflare**'in herkese açık hız testi ucudur
-(`speed.cloudflare.com`). Ayarlardan **Sunucuyu test et** ile erişilebilirliğini
-kontrol edebilir, istersen kendi adresini girebilirsin (sunucunun
-`/__down?bytes=N` ve `/__up` uçlarını CORS ile sunması gerekir).
+### Ölçüm kaynağı
+
+Varsayılan kaynak **sitenin kendi dosyasıdır** (`payload.bin`, 8 MiB rastgele
+veri). Aynı origin olduğu için CORS gerekmez ve uygulama hiçbir üçüncü taraf
+sunucuya bağımlı değildir — bu, ölçümün "sunucu bize izin veriyor mu?"
+sorusuna takılmamasını garanti eder.
+
+Ayarlardan kaynağı **Cloudflare hız testi sunucusu** ya da **kendi adresin**
+olarak da seçebilirsin; uzak kaynakta yükleme testi de açılır. Adresin
+`/__down?bytes=N` ve `/__up` uçlarını CORS ile sunması gerekir.
+**Kaynağı test et** düğmesi erişimi ve Range desteğini anında raporlar.
 
 ---
 
@@ -96,6 +106,9 @@ kontrol edebilir, istersen kendi adresini girebilirsin (sunucunun
 
 Kaba tahmin: ~1 Mbit/s'lik yavaş bir hatta ölçüm başına ~0,3 MB;
 50 Mbit/s'lik hızlı bir hatta üst sınır olan 8 MB.
+
+Sayaç yaklaşıktır: gövde baytlarını tam sayar, HTTP başlıkları için ping
+başına ~0,5 KB ekler.
 
 ---
 
@@ -125,6 +138,8 @@ aktarabilir** veya **tümünü silebilirsin**.
 ```
 sinyal-haritasi/
 ├── index.html            # uygulamanın tamamı (HTML + CSS + JS, bağımlılık yok)
+├── payload.bin           # 8 MiB rastgele veri — indirme hızı bununla ölçülür
+├── ping.txt              # 1 bayt — gecikme bununla ölçülür
 ├── sw.js                 # kapsama dışında da açılabilsin diye service worker
 ├── manifest.webmanifest  # ana ekrana eklenince uygulama gibi açılması için
 ├── icon.svg
